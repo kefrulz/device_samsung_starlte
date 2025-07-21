@@ -1,0 +1,61 @@
+---
+# This workflow builds the ROM and recovery image for starlte.
+# Note: Building Android ROMs may require a self-hosted runner due to the large
+# amount of disk space and time required.
+
+name: Build ROM
+
+'on':
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout device tree
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk git wget repo \
+            build-essential bc curl python3 zip
+          sudo ln -sf /usr/bin/python3 /usr/bin/python
+
+      - name: Initialize manifest
+        run: |
+          mkdir -p ~/android
+          cd ~/android
+          repo init -u https://github.com/PixelExperience/manifest -b fourteen
+
+      - name: Sync repositories
+        run: |
+          cd ~/android
+          repo sync -j$(nproc --all)
+
+      - name: Link device tree
+        run: |
+          cd ~/android
+          mkdir -p device/samsung
+          ln -s $GITHUB_WORKSPACE device/samsung/starlte
+
+      - name: Build ROM and recovery
+        run: |
+          cd ~/android
+          source build/envsetup.sh
+          lunch aosp_starlte-userdebug
+          mka bacon
+          mka recoveryimage
+        shell: bash
+
+      - name: Upload ROM zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: starlte-rom
+          path: ~/android/out/target/product/starlte/*.zip
+
+      - name: Upload recovery image
+        uses: actions/upload-artifact@v4
+        with:
+          name: starlte-recovery
+          path: ~/android/out/target/product/starlte/recovery.img
