@@ -47,13 +47,13 @@ jobs:
         shell: bash
 
       - name: Upload ROM zip
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: starlte-rom
           path: ~/android/out/target/product/starlte/*.zip
 
       - name: Upload recovery image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: starlte-recovery
           path: ~/android/out/target/product/starlte/recovery.img
